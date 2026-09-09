@@ -1,6 +1,38 @@
+const path = require("path");
 const Database = require("better-sqlite3");
 
-const db = new Database("dotopia.db");
+// ==========================================
+// DATABASE PATH
+// ==========================================
+//
+// Local development:
+//   ./dotopia.db
+//
+// Railway with persistent volume:
+//   Uses RAILWAY_VOLUME_MOUNT_PATH automatically.
+//
+// You can also explicitly provide DATABASE_PATH.
+// ==========================================
+
+const dbPath =
+    process.env.DATABASE_PATH ||
+    (
+        process.env.RAILWAY_VOLUME_MOUNT_PATH
+            ? path.join(
+                process.env.RAILWAY_VOLUME_MOUNT_PATH,
+                "dotopia.db"
+            )
+            : path.join(
+                __dirname,
+                "dotopia.db"
+            )
+    );
+
+console.log(
+    `📦 Using database: ${dbPath}`
+);
+
+const db = new Database(dbPath);
 
 db.pragma("foreign_keys = ON");
 
@@ -61,7 +93,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added invite_link"
+        "📌 Added invite_link"
     );
 }
 
@@ -77,7 +109,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added reminder_7_sent"
+        "📌 Added reminder_7_sent"
     );
 }
 
@@ -93,7 +125,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added reminder_1_sent"
+        "📌 Added reminder_1_sent"
     );
 }
 
@@ -109,7 +141,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added expiry_notification_sent"
+        "📌 Added expiry_notification_sent"
     );
 }
 
@@ -178,7 +210,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added fulfillment_status"
+        "📌 Added fulfillment_status"
     );
 }
 
@@ -194,7 +226,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added membership_id"
+        "📌 Added membership_id"
     );
 }
 
@@ -210,7 +242,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added fulfillment_type"
+        "📌 Added fulfillment_type"
     );
 }
 
@@ -226,7 +258,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added last_error"
+        "📌 Added last_error"
     );
 }
 
@@ -242,7 +274,7 @@ if (
     `);
 
     console.log(
-        "🆕 Added recovery_attempted_at"
+        "📌 Added recovery_attempted_at"
     );
 }
 
