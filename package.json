@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently --kill-others --names SERVER,BOT,CHECKER,RECOVERY \"npm run server\" \"npm run bot\" \"npm run checker\" \"npm run recovery\"",
+    "start": "concurrently --names SERVER,BOT,CHECKER,RECOVERY \"npm run server\" \"npm run bot\" \"npm run checker\" \"npm run recovery\"",
     "server": "node server.js",
     "bot": "node bot.js",
     "checker": "node membership-checker.js",
