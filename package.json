@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "concurrently --kill-others --names SERVER,BOT,CHECKER,RECOVERY \"npm run server\" \"npm run bot\" \"npm run checker\" \"npm run recovery\"",
+    "server": "node server.js",
+    "bot": "node bot.js",
+    "checker": "node membership-checker.js",
+    "recovery": "node payment-recovery.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +16,7 @@
   "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "concurrently": "^10.0.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "razorpay": "^2.9.8",
