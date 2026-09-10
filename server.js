@@ -1562,6 +1562,703 @@ app.post(
 );
 
 // ==========================================
+
+/* ==========================================
+   PRIVATE ADMIN DASHBOARD
+   ========================================== */
+
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+
+function adminAuth(req, res, next) {
+
+    const auth = req.headers.authorization;
+
+    if (!auth || !auth.startsWith("Basic ")) {
+        res.setHeader(
+            "WWW-Authenticate",
+            'Basic realm="Dotopia Admin"'
+        );
+        return res.status(401).send("Authentication required");
+    }
+
+    try {
+
+        const decoded = Buffer
+            .from(auth.slice(6), "base64")
+            .toString("utf8");
+
+        const separator = decoded.indexOf(":");
+
+        if (separator === -1) {
+            throw new Error("Invalid authentication");
+        }
+
+        const username = decoded.slice(0, separator);
+        const password = decoded.slice(separator + 1);
+
+        const expectedPassword =
+            process.env.ADMIN_PASSWORD || "";
+
+        const usernameValid =
+            username === ADMIN_USERNAME;
+
+        const passwordValid =
+            password === expectedPassword;
+
+        if (!usernameValid || !passwordValid) {
+            throw new Error("Invalid credentials");
+        }
+
+        next();
+
+    } catch (error) {
+
+        res.setHeader(
+            "WWW-Authenticate",
+            'Basic realm="Dotopia Admin"'
+        );
+
+        return res
+            .status(401)
+            .send("Invalid credentials");
+    }
+}
+
+app.use("/admin", adminAuth);
+
+
+/* ==========================================
+   ADMIN DASHBOARD PAGE
+   ========================================== */
+
+app.get("/admin", (req, res) => {
+
+    const html = [
+        "<!DOCTYPE html>",
+        "<html>",
+        "<head>",
+        '<meta charset="UTF-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+        "<title>Dotopia Admin Dashboard</title>",
+
+        "<style>",
+
+        "*{box-sizing:border-box}",
+
+        "body{",
+        "margin:0;",
+        "font-family:Arial,Helvetica,sans-serif;",
+        "background:#f5f6fa;",
+        "color:#111827;",
+        "}",
+
+        ".container{",
+        "max-width:1400px;",
+        "margin:auto;",
+        "padding:30px;",
+        "}",
+
+        "h1{margin:0;font-size:30px}",
+
+        ".subtitle{",
+        "margin-top:6px;",
+        "color:#6b7280;",
+        "}",
+
+        ".cards{",
+        "display:grid;",
+        "grid-template-columns:repeat(auto-fit,minmax(190px,1fr));",
+        "gap:16px;",
+        "margin-top:28px;",
+        "}",
+
+        ".card{",
+        "background:white;",
+        "border-radius:14px;",
+        "padding:20px;",
+        "box-shadow:0 2px 10px rgba(0,0,0,.06);",
+        "}",
+
+        ".card-title{",
+        "color:#6b7280;",
+        "font-size:13px;",
+        "margin-bottom:10px;",
+        "}",
+
+        ".card-value{",
+        "font-size:28px;",
+        "font-weight:bold;",
+        "}",
+
+        ".section{",
+        "background:white;",
+        "border-radius:14px;",
+        "margin-top:24px;",
+        "padding:22px;",
+        "box-shadow:0 2px 10px rgba(0,0,0,.06);",
+        "overflow-x:auto;",
+        "}",
+
+        ".section h2{",
+        "margin-top:0;",
+        "font-size:20px;",
+        "}",
+
+        "table{",
+        "width:100%;",
+        "border-collapse:collapse;",
+        "min-width:850px;",
+        "}",
+
+        "th,td{",
+        "padding:12px 10px;",
+        "border-bottom:1px solid #e5e7eb;",
+        "text-align:left;",
+        "font-size:14px;",
+        "}",
+
+        "th{",
+        "color:#6b7280;",
+        "font-weight:600;",
+        "}",
+
+        "button{",
+        "border:0;",
+        "border-radius:8px;",
+        "padding:8px 12px;",
+        "cursor:pointer;",
+        "font-weight:600;",
+        "background:#111827;",
+        "color:white;",
+        "}",
+
+        ".status{",
+        "display:inline-block;",
+        "padding:5px 9px;",
+        "border-radius:999px;",
+        "font-size:12px;",
+        "font-weight:600;",
+        "}",
+
+        ".active{background:#dcfce7;color:#166534}",
+        ".expired{background:#fee2e2;color:#991b1b}",
+        ".processing{background:#fef3c7;color:#92400e}",
+        ".completed{background:#dcfce7;color:#166534}",
+
+        ".empty{",
+        "padding:20px 0;",
+        "color:#6b7280;",
+        "}",
+
+        ".refresh{",
+        "float:right;",
+        "}",
+
+        "</style>",
+        "</head>",
+
+        "<body>",
+
+        '<div class="container">',
+
+        '<button class="refresh" onclick="loadDashboard()">Refresh</button>',
+
+        "<h1>Dotopia Admin Dashboard</h1>",
+
+        '<div class="subtitle">Memberships, payments and fulfillment</div>',
+
+        '<div class="cards">',
+
+        '<div class="card">',
+        '<div class="card-title">Active Members</div>',
+        '<div class="card-value" id="activeMembers">—</div>',
+        "</div>",
+
+        '<div class="card">',
+        '<div class="card-title">Expiring Soon</div>',
+        '<div class="card-value" id="expiringSoon">—</div>',
+        "</div>",
+
+        '<div class="card">',
+        '<div class="card-title">Expired</div>',
+        '<div class="card-value" id="expiredMembers">—</div>',
+        "</div>",
+
+        '<div class="card">',
+        '<div class="card-title">Payments</div>',
+        '<div class="card-value" id="payments">—</div>',
+        "</div>",
+
+        '<div class="card">',
+        '<div class="card-title">Revenue</div>',
+        '<div class="card-value" id="revenue">—</div>',
+        "</div>",
+
+        '<div class="card">',
+        '<div class="card-title">Needs Recovery</div>',
+        '<div class="card-value" id="recovery">—</div>',
+        "</div>",
+
+        "</div>",
+
+        '<div class="section">',
+
+        "<h2>Members</h2>",
+
+        "<table>",
+
+        "<thead>",
+        "<tr>",
+        "<th>ID</th>",
+        "<th>Telegram User</th>",
+        "<th>Status</th>",
+        "<th>Start</th>",
+        "<th>End</th>",
+        "<th>Payment</th>",
+        "<th>Action</th>",
+        "</tr>",
+        "</thead>",
+
+        '<tbody id="membersTable">',
+        '<tr><td colspan="7">Loading...</td></tr>',
+        "</tbody>",
+
+        "</table>",
+
+        "</div>",
+
+        '<div class="section">',
+
+        "<h2>Payment History</h2>",
+
+        "<table>",
+
+        "<thead>",
+        "<tr>",
+        "<th>ID</th>",
+        "<th>Telegram User</th>",
+        "<th>Payment</th>",
+        "<th>Amount</th>",
+        "<th>Status</th>",
+        "<th>Fulfillment</th>",
+        "<th>Action</th>",
+        "</tr>",
+        "</thead>",
+
+        '<tbody id="paymentsTable">',
+        '<tr><td colspan="7">Loading...</td></tr>',
+        "</tbody>",
+
+        "</table>",
+
+        "</div>",
+
+        "</div>",
+
+        "<script>",
+
+        "async function loadDashboard(){",
+
+        "try{",
+
+        'const response=await fetch("/admin/api/dashboard");',
+
+        "if(!response.ok)throw new Error('Dashboard request failed');",
+
+        "const data=await response.json();",
+
+        'document.getElementById("activeMembers").textContent=data.stats.activeMembers;',
+        'document.getElementById("expiringSoon").textContent=data.stats.expiringSoon;',
+        'document.getElementById("expiredMembers").textContent=data.stats.expiredMembers;',
+        'document.getElementById("payments").textContent=data.stats.payments;',
+        'document.getElementById("revenue").textContent="₹"+Number(data.stats.revenue||0).toLocaleString("en-IN");',
+        'document.getElementById("recovery").textContent=data.stats.needsRecovery;',
+
+        'const members=document.getElementById("membersTable");',
+
+        "if(!data.members.length){",
+
+        'members.innerHTML="<tr><td colspan=\\"7\\" class=\\"empty\\">No memberships found.</td></tr>";',
+
+        "}else{",
+
+        "members.innerHTML=data.members.map(function(member){",
+
+        'const statusClass=member.status==="active"?"active":"expired";',
+
+        "return '<tr>' +",
+        "'<td>'+member.id+'</td>' +",
+        "'<td>'+member.telegram_user_id+'</td>' +",
+        "'<td><span class=\"status '+statusClass+'\">'+member.status+'</span></td>' +",
+        "'<td>'+new Date(member.membership_start).toLocaleString()+'</td>' +",
+        "'<td>'+new Date(member.membership_end).toLocaleString()+'</td>' +",
+        "'<td>'+(member.payment_id||'—')+'</td>' +",
+        "'<td>'+(member.status==='active' ? '<button onclick=\"resendAccess('+member.id+')\">Resend Access</button>' : '—')+'</td>' +",
+        "'</tr>';",
+
+        "}).join('');",
+
+        "}",
+
+        'const payments=document.getElementById("paymentsTable");',
+
+        "if(!data.payments.length){",
+
+        'payments.innerHTML="<tr><td colspan=\\"7\\" class=\\"empty\\">No payments found.</td></tr>";',
+
+        "}else{",
+
+        "payments.innerHTML=data.payments.map(function(payment){",
+
+        'const fulfillmentClass=payment.fulfillment_status==="completed"?"completed":"processing";',
+
+        "return '<tr>' +",
+        "'<td>'+payment.id+'</td>' +",
+        "'<td>'+payment.telegram_user_id+'</td>' +",
+        "'<td>'+payment.payment_id+'</td>' +",
+        "'<td>₹'+(Number(payment.amount_paise||0)/100).toLocaleString('en-IN')+'</td>' +",
+        "'<td>'+(payment.payment_status||'—')+'</td>' +",
+        "'<td><span class=\"status '+fulfillmentClass+'\">'+(payment.fulfillment_status||'—')+'</span></td>' +",
+        "'<td>'+(payment.fulfillment_status==='processing' ? '<button onclick=\"retryPayment('+payment.id+')\">Retry</button>' : '—')+'</td>' +",
+        "'</tr>';",
+
+        "}).join('');",
+
+        "}",
+
+        "}catch(error){",
+
+        "console.error(error);",
+
+        'alert("Could not load dashboard. Check the server logs.");',
+
+        "}",
+
+        "}",
+
+        "async function resendAccess(memberId){",
+
+        'if(!confirm("Resend membership access?"))return;',
+
+        "const response=await fetch(",
+        '"/admin/api/members/"+memberId+"/resend",',
+        "{method:'POST'}",
+        ");",
+
+        "const data=await response.json();",
+
+        'alert(data.message||data.error||"Done");',
+
+        "loadDashboard();",
+
+        "}",
+
+        "async function retryPayment(paymentId){",
+
+        'if(!confirm("Retry this payment fulfillment?"))return;',
+
+        "const response=await fetch(",
+        '"/admin/api/payments/"+paymentId+"/retry",',
+        "{method:'POST'}",
+        ");",
+
+        "const data=await response.json();",
+
+        'alert(data.message||data.error||"Done");',
+
+        "loadDashboard();",
+
+        "}",
+
+        "loadDashboard();",
+
+        "setInterval(loadDashboard,60000);",
+
+        "</script>",
+
+        "</body>",
+        "</html>"
+
+    ].join("");
+
+    res.send(html);
+
+});
+
+
+/* ==========================================
+   ADMIN DASHBOARD API
+   ========================================== */
+
+app.get("/admin/api/dashboard", (req, res) => {
+
+    try {
+
+        const now = new Date().toISOString();
+
+        const sevenDaysFromNow =
+            new Date(
+                Date.now() +
+                7 * 24 * 60 * 60 * 1000
+            ).toISOString();
+
+        const activeMembers =
+            db.prepare(`
+                SELECT *
+                FROM memberships
+                WHERE status = 'active'
+                AND membership_end > ?
+                ORDER BY membership_end ASC
+            `).all(now);
+
+        const expiredMembers =
+            db.prepare(`
+                SELECT *
+                FROM memberships
+                WHERE status = 'expired'
+                OR (
+                    status = 'active'
+                    AND membership_end <= ?
+                )
+                ORDER BY membership_end DESC
+            `).all(now);
+
+        const expiringSoon =
+            db.prepare(`
+                SELECT *
+                FROM memberships
+                WHERE status = 'active'
+                AND membership_end > ?
+                AND membership_end <= ?
+                ORDER BY membership_end ASC
+            `).all(
+                now,
+                sevenDaysFromNow
+            );
+
+        const payments =
+            db.prepare(`
+                SELECT *
+                FROM payments
+                ORDER BY id DESC
+                LIMIT 200
+            `).all();
+
+        const members =
+            db.prepare(`
+                SELECT *
+                FROM memberships
+                ORDER BY id DESC
+                LIMIT 200
+            `).all();
+
+        const revenue =
+            db.prepare(`
+                SELECT COALESCE(
+                    SUM(amount_paise),
+                    0
+                ) AS total
+                FROM payments
+                WHERE payment_status = 'paid'
+            `).get();
+
+        const needsRecovery =
+            db.prepare(`
+                SELECT COUNT(*) AS count
+                FROM payments
+                WHERE fulfillment_status = 'processing'
+            `).get();
+
+        res.json({
+
+            stats: {
+                activeMembers: activeMembers.length,
+                expiringSoon: expiringSoon.length,
+                expiredMembers: expiredMembers.length,
+                payments: payments.length,
+                revenue: Number(revenue.total || 0) / 100,
+                needsRecovery: Number(needsRecovery.count || 0)
+            },
+
+            members,
+            payments
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[ADMIN] Dashboard error:",
+            error
+        );
+
+        res
+            .status(500)
+            .json({
+                error: "Failed to load dashboard"
+            });
+    }
+
+});
+
+
+app.post(
+    "/admin/api/members/:id/resend",
+    async (req, res) => {
+
+        try {
+
+            const member =
+                db.prepare(`
+                    SELECT *
+                    FROM memberships
+                    WHERE id = ?
+                `).get(req.params.id);
+
+            if (!member) {
+
+                return res
+                    .status(404)
+                    .json({
+                        error: "Membership not found"
+                    });
+            }
+
+            if (
+                member.status !== "active" ||
+                new Date(member.membership_end) <= new Date()
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        error: "Membership is not active"
+                    });
+            }
+
+            const invite =
+                await bot.telegram.createChatInviteLink(
+                    CHANNEL_ID,
+                    {
+                        member_limit: 1,
+                        expire_date:
+                            Math.floor(
+                                new Date(
+                                    member.membership_end
+                                ).getTime() / 1000
+                            )
+                    }
+                );
+
+            db.prepare(`
+                UPDATE memberships
+                SET invite_link = ?
+                WHERE id = ?
+            `).run(
+                invite.invite_link,
+                member.id
+            );
+
+            await bot.telegram.sendMessage(
+                member.telegram_user_id,
+                [
+                    "🔗 Membership Access",
+                    "",
+                    "Your private channel access link:",
+                    "",
+                    invite.invite_link,
+                    "",
+                    "This link is for your account only.",
+                    "",
+                    "Membership expires:",
+                    new Date(
+                        member.membership_end
+                    ).toLocaleString("en-IN")
+                ].join("\n")
+            );
+
+            res.json({
+                message:
+                    "Fresh access link sent successfully."
+            });
+
+        } catch (error) {
+
+            console.error(
+                "[ADMIN] Resend access error:",
+                error
+            );
+
+            res
+                .status(500)
+                .json({
+                    error:
+                        "Failed to resend access"
+                });
+        }
+
+    }
+);
+
+
+app.post(
+    "/admin/api/payments/:paymentId/retry",
+    async (req, res) => {
+
+        try {
+
+            const payment =
+                db.prepare(`
+                    SELECT *
+                    FROM payments
+                    WHERE id = ?
+                `).get(req.params.paymentId);
+
+            if (!payment) {
+
+                return res
+                    .status(404)
+                    .json({
+                        error: "Payment not found"
+                    });
+            }
+
+            if (
+                payment.fulfillment_status ===
+                "completed"
+            ) {
+
+                return res.json({
+                    message:
+                        "Payment is already completed."
+                });
+            }
+
+            await fulfillPayment(payment);
+
+            res.json({
+                message:
+                    "Payment fulfillment completed."
+            });
+
+        } catch (error) {
+
+            console.error(
+                "[ADMIN] Retry fulfillment error:",
+                error
+            );
+
+            res
+                .status(500)
+                .json({
+                    error:
+                        "Fulfillment failed. Check server logs."
+                });
+        }
+
+    }
+);
+
 // START SERVER
 // ==========================================
 
