@@ -1648,8 +1648,8 @@ app.get("/admin", (req, res) => {
         "body{",
         "margin:0;",
         "font-family:Arial,Helvetica,sans-serif;",
-        "background:#f5f6fa;",
-        "color:#111827;",
+        "background:#0f172a;",
+        "color:#e5e7eb;",
         "}",
 
         ".container{",
@@ -1673,14 +1673,14 @@ app.get("/admin", (req, res) => {
         "}",
 
         ".card{",
-        "background:white;",
+        "background:#1e293b;",
         "border-radius:14px;",
         "padding:20px;",
         "box-shadow:0 2px 10px rgba(0,0,0,.06);",
         "}",
 
         ".card-title{",
-        "color:#6b7280;",
+        "color:#94a3b8;",
         "font-size:13px;",
         "margin-bottom:10px;",
         "}",
@@ -1691,7 +1691,7 @@ app.get("/admin", (req, res) => {
         "}",
 
         ".section{",
-        "background:white;",
+        "background:#1e293b;",
         "border-radius:14px;",
         "margin-top:24px;",
         "padding:22px;",
@@ -1712,7 +1712,7 @@ app.get("/admin", (req, res) => {
 
         "th,td{",
         "padding:12px 10px;",
-        "border-bottom:1px solid #e5e7eb;",
+        "border-bottom:1px solid #334155;",
         "text-align:left;",
         "font-size:14px;",
         "}",
@@ -1728,8 +1728,8 @@ app.get("/admin", (req, res) => {
         "padding:8px 12px;",
         "cursor:pointer;",
         "font-weight:600;",
-        "background:#111827;",
-        "color:white;",
+        "background:#f1f5f9;",
+        "color:#0f172a;",
         "}",
 
         ".status{",
@@ -2317,3 +2317,4 @@ app.listen(
         console.log("");
     }
 );
+    
