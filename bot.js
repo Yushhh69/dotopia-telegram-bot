@@ -28,6 +28,8 @@ const razorpay = new Razorpay({
 // ==========================================
 
 const MEMBERSHIP_AMOUNT = 149900;
+const AUTOPAY_PLAN_ID = "plan_ToV39QZUp1PPAM";
+const AUTOPAY_TOTAL_COUNT = 40;
 
 // ==========================================
 // MAIN MENU
@@ -213,23 +215,32 @@ bot.action(
 
             "Click below to continue.",
 
-            Markup.inlineKeyboard([
+           
+Markup.inlineKeyboard([
 
-                [
-                    Markup.button.callback(
-                        "💳 Continue to Payment",
-                        "payment"
-                    )
-                ],
+    [
+        Markup.button.callback(
+            "💳 Pay Once — ₹1,499",
+            "payment"
+        )
+    ],
 
-                [
-                    Markup.button.callback(
-                        "⬅️ Back",
-                        "back_to_menu"
-                    )
-                ]
+    [
+        Markup.button.callback(
+            "🔄 Subscribe with AutoPay",
+            "autopay"
+        )
+    ],
 
-            ])
+    [
+        Markup.button.callback(
+            "⬅️ Back",
+            "back_to_menu"
+        )
+    ]
+
+])
+
         );
     }
 );
@@ -673,6 +684,138 @@ bot.action(
 );
 
 // ==========================================
+
+ // ==========================================
+ // CREATE RAZORPAY AUTOPAY SUBSCRIPTION
+ // ==========================================
+
+bot.action("autopay", async (ctx) => {
+    await ctx.answerCbQuery();
+
+    const telegramUserId = String(ctx.from.id);
+
+    try {
+        // Reuse an existing pending or active subscription
+        // rather than creating duplicates on repeated clicks.
+        const existing = db.prepare(`
+            SELECT *
+            FROM subscriptions
+            WHERE telegram_user_id = ?
+              AND status IN ('created', 'authenticated', 'active')
+            ORDER BY id DESC
+            LIMIT 1
+        `).get(telegramUserId);
+
+        if (existing && existing.short_url) {
+            await ctx.reply(
+                "🔄 You already have an AutoPay subscription link or subscription.\n\n" +
+                "Continue here to complete authorization or view your subscription:",
+                Markup.inlineKeyboard([
+                    [
+                        Markup.button.url(
+                            "Continue to AutoPay",
+                            existing.short_url
+                        )
+                    ],
+                    [
+                        Markup.button.callback(
+                            "⬅️ Back",
+                            "back_to_menu"
+                        )
+                    ]
+                ])
+            );
+            return;
+        }
+
+        const subscription = await razorpay.subscriptions.create({
+            plan_id: AUTOPAY_PLAN_ID,
+            total_count: AUTOPAY_TOTAL_COUNT,
+            quantity: 1,
+            customer_notify: true,
+            notes: {
+                telegram_user_id: telegramUserId,
+                membership: "3_months",
+                amount: "1499",
+                billing: "autopay"
+            }
+        });
+
+        db.prepare(`
+            INSERT INTO subscriptions (
+                razorpay_subscription_id,
+                telegram_user_id,
+                plan_id,
+                status,
+                short_url
+            )
+            VALUES (?, ?, ?, ?, ?)
+        `).run(
+            subscription.id,
+            telegramUserId,
+            AUTOPAY_PLAN_ID,
+            subscription.status || "created",
+            subscription.short_url || null
+        );
+
+        if (!subscription.short_url) {
+            throw new Error(
+                "Razorpay did not return a subscription authorization URL."
+            );
+        }
+
+        await ctx.reply(
+            "🔄 *Dotopia AutoPay*\n\n" +
+            "Amount: ₹1,499 every 3 months\n" +
+            "Billing: Automatic recurring payments\n" +
+            "Cancellation: You can cancel your subscription\n\n" +
+            "Open Razorpay to review the subscription and complete the required authorization.\n\n" +
+            "Your membership will be activated or extended only after the relevant payment is confirmed.",
+            {
+                parse_mode: "Markdown",
+                ...Markup.inlineKeyboard([
+                    [
+                        Markup.button.url(
+                            "🔐 Authorize AutoPay",
+                            subscription.short_url
+                        )
+                    ],
+                    [
+                        Markup.button.callback(
+                            "👤 My Membership",
+                            "my_membership"
+                        )
+                    ],
+                    [
+                        Markup.button.callback(
+                            "⬅️ Back",
+                            "back_to_menu"
+                        )
+                    ]
+                ])
+            }
+        );
+
+        console.log(
+            "✅ AutoPay subscription created:",
+            subscription.id,
+            "for Telegram user:",
+            telegramUserId
+        );
+
+    } catch (error) {
+        console.error(
+            "❌ AutoPay subscription creation failed:",
+            error
+        );
+
+        await ctx.reply(
+            "Sorry, we couldn't create your AutoPay subscription right now. " +
+            "Please try again later or use the one-time payment option."
+        );
+    }
+});
+
 // CREATE RAZORPAY PAYMENT
 // ==========================================
 

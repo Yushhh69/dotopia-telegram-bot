@@ -310,4 +310,33 @@ console.log(
     "✅ Dotopia database initialized"
 );
 
+/* ==========================================
+   RAZORPAY SUBSCRIPTIONS
+========================================== */
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        razorpay_subscription_id TEXT NOT NULL UNIQUE,
+        telegram_user_id TEXT NOT NULL,
+        plan_id TEXT NOT NULL,
+
+        status TEXT NOT NULL DEFAULT 'created',
+
+        short_url TEXT,
+
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS
+    idx_subscriptions_telegram_user
+    ON subscriptions(telegram_user_id);
+
+    CREATE INDEX IF NOT EXISTS
+    idx_subscriptions_status
+    ON subscriptions(status);
+`);
+    
 module.exports = db;

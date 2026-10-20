@@ -1116,6 +1116,262 @@ app.post(
                 "📦 Event:",
                 event
             );
+            
+            // ==========================================
+            // RAZORPAY AUTOPAY SUBSCRIPTION WEBHOOKS
+            // ==========================================
+
+            const subscriptionEvents = [
+                "subscription.authenticated",
+                "subscription.activated",
+                "subscription.charged",
+                "subscription.halted",
+                "subscription.cancelled"
+            ];
+
+            if (subscriptionEvents.includes(event)) {
+
+                const payload = req.body.payload || {};
+
+                const subscription =
+                    payload.subscription?.entity;
+
+                const payment =
+                    payload.payment?.entity;
+
+                const subscriptionId =
+                    subscription?.id;
+
+                if (!subscriptionId) {
+                    console.error(
+                        "AutoPay webhook missing subscription ID"
+                    );
+
+                    return res.status(400).send(
+                        "Subscription ID missing"
+                    );
+                }
+
+                const savedSubscription = db.prepare(`
+                    SELECT *
+                    FROM subscriptions
+                    WHERE razorpay_subscription_id = ?
+                `).get(subscriptionId);
+
+                if (!savedSubscription) {
+                    console.error(
+                        "AutoPay subscription not found:",
+                        subscriptionId
+                    );
+
+                    // Allow Razorpay to retry delivery.
+                    return res.status(500).send(
+                        "Subscription not found"
+                    );
+                }
+
+                const statusByEvent = {
+                    "subscription.authenticated": "authenticated",
+                    "subscription.activated": "active",
+                    "subscription.halted": "halted",
+                    "subscription.cancelled": "cancelled"
+                };
+
+                const nextStatus =
+                    event === "subscription.charged"
+                        ? (subscription.status || "active")
+                        : statusByEvent[event];
+
+                if (nextStatus) {
+                    db.prepare(`
+                        UPDATE subscriptions
+                        SET status = ?, updated_at = CURRENT_TIMESTAMP
+                        WHERE razorpay_subscription_id = ?
+                    `).run(nextStatus, subscriptionId);
+                }
+
+                // Status events do not grant membership.
+                if (event !== "subscription.charged") {
+                    console.log(
+                        "AutoPay subscription status updated:",
+                        subscriptionId,
+                        nextStatus
+                    );
+
+                    return res.status(200).send(
+                        "Subscription status updated"
+                    );
+                }
+
+                // Only a confirmed, captured charge may renew access.
+                if (
+                    !payment?.id ||
+                    payment.status !== "captured" ||
+                    Number(payment.amount) !== MEMBERSHIP_AMOUNT_PAISE ||
+                    payment.currency !== "INR"
+                ) {
+                    console.error(
+                        "AutoPay charge failed validation",
+                        {
+                            paymentId: payment?.id,
+                            status: payment?.status,
+                            amount: payment?.amount,
+                            currency: payment?.currency
+                        }
+                    );
+
+                    // Do not grant access for an invalid or incomplete charge.
+                    return res.status(400).send(
+                        "Invalid or unsuccessful subscription charge"
+                    );
+                }
+
+                const paymentId = payment.id;
+                const telegramUserId =
+                    savedSubscription.telegram_user_id;
+
+                const referenceId =
+                    `TG_${telegramUserId}_AUTOPAY_${subscriptionId}`;
+
+                const orderId = payment.order_id || "";
+                const razorpayEventId =
+                    req.headers["x-razorpay-event-id"];
+
+                if (!razorpayEventId) {
+                    return res.status(400).send(
+                        "Webhook event ID missing"
+                    );
+                }
+
+                console.log(
+                    "AutoPay charge confirmed:",
+                    paymentId,
+                    "Telegram user:",
+                    telegramUserId
+                );
+
+                const existingPayment =
+                    getPaymentById(paymentId);
+
+                if (existingPayment) {
+                    if (
+                        existingPayment.fulfillment_status === "completed"
+                    ) {
+                        return res.status(200).send(
+                            "AutoPay charge already processed"
+                        );
+                    }
+
+                    if (
+                        existingPayment.fulfillment_status === "processing"
+                    ) {
+                        try {
+                            await fulfillPayment(paymentId);
+
+                            return res.status(200).send(
+                                "AutoPay fulfillment recovered"
+                            );
+                        } catch (error) {
+                            console.error(
+                                "AutoPay fulfillment recovery failed:",
+                                error
+                            );
+
+                            return res.status(500).send(
+                                "AutoPay fulfillment recovery failed"
+                            );
+                        }
+                    }
+
+                    return res.status(500).send(
+                        "Unexpected AutoPay payment state"
+                    );
+                }
+
+                let prepared;
+
+                try {
+                    prepared = preparePaymentFulfillment({
+                        telegramUserId,
+                        paymentId,
+                        paymentLinkId: "",
+                        orderId,
+                        referenceId,
+                        amount: payment.amount,
+                        razorpayEventId
+                    });
+                } catch (error) {
+                    // A concurrent delivery may have inserted this payment.
+                    if (
+                        String(error.message).includes(
+                            "UNIQUE constraint failed"
+                        )
+                    ) {
+                        const paymentAfterRace =
+                            getPaymentById(paymentId);
+
+                        if (
+                            paymentAfterRace &&
+                            paymentAfterRace.fulfillment_status === "processing"
+                        ) {
+                            try {
+                                await fulfillPayment(paymentId);
+
+                                return res.status(200).send(
+                                    "AutoPay fulfillment recovered"
+                                );
+                            } catch (fulfillmentError) {
+                                console.error(
+                                    "AutoPay race recovery failed:",
+                                    fulfillmentError
+                                );
+
+                                return res.status(500).send(
+                                    "AutoPay recovery failed"
+                                );
+                            }
+                        }
+
+                        if (
+                            paymentAfterRace &&
+                            paymentAfterRace.fulfillment_status === "completed"
+                        ) {
+                            return res.status(200).send(
+                                "AutoPay charge already processed"
+                            );
+                        }
+                    }
+
+                    throw error;
+                }
+
+                try {
+                    await fulfillPayment(paymentId);
+                } catch (error) {
+                    console.error(
+                        "AutoPay payment saved but fulfillment failed:",
+                        error
+                    );
+
+                    return res.status(500).send(
+                        "AutoPay fulfillment failed"
+                    );
+                }
+
+                console.log(
+                    "AutoPay membership fulfilled:",
+                    prepared.membership.id
+                );
+
+                return res.status(200).send(
+                    "AutoPay charge processed"
+                );
+            }
+
+            // payment.captured is deliberately not used as
+            // a membership-renewal trigger. The subscription.charged
+            // event is the sole AutoPay renewal trigger.
+
 
             if (
                 event !==
