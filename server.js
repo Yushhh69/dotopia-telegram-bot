@@ -1152,23 +1152,96 @@ app.post(
                     );
                 }
 
-                const savedSubscription = db.prepare(`
-                    SELECT *
-                    FROM subscriptions
-                    WHERE razorpay_subscription_id = ?
-                `).get(subscriptionId);
+               
+let savedSubscription = db.prepare(`
+    SELECT *
+    FROM subscriptions
+    WHERE razorpay_subscription_id = ?
+`).get(subscriptionId);
 
-                if (!savedSubscription) {
-                    console.error(
-                        "AutoPay subscription not found:",
-                        subscriptionId
-                    );
+if (!savedSubscription) {
+    console.warn(
+        "[SERVER] Attempting AutoPay mapping recovery:",
+        subscriptionId
+    );
 
-                    // Allow Razorpay to retry delivery.
-                    return res.status(500).send(
-                        "Subscription not found"
-                    );
-                }
+    // Recover only from the verified Razorpay webhook.
+    const telegramUserId =
+        subscription.notes?.telegram_user_id;
+
+    const planId = subscription.plan_id;
+
+    // Refuse recovery unless the subscription matches
+    // the expected Dotopia AutoPay plan and has a user ID.
+    if (
+        planId !== "plan_ToV39QZUp1PPAM" ||
+        !telegramUserId ||
+        !/^\d+$/.test(String(telegramUserId))
+    ) {
+        console.error(
+            "[SERVER] AutoPay mapping recovery rejected:",
+            {
+                subscriptionId,
+                planId,
+                hasTelegramUserId: Boolean(telegramUserId)
+            }
+        );
+
+        return res.status(500).send(
+            "Subscription mapping requires manual recovery"
+        );
+    }
+
+    try {
+        db.prepare(`
+            INSERT INTO subscriptions (
+                razorpay_subscription_id,
+                telegram_user_id,
+                plan_id,
+                status,
+                short_url
+            )
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(razorpay_subscription_id)
+            DO NOTHING
+        `).run(
+            subscriptionId,
+            String(telegramUserId),
+            planId,
+            subscription.status || "created",
+            subscription.short_url || null
+        );
+
+        savedSubscription = db.prepare(`
+            SELECT *
+            FROM subscriptions
+            WHERE razorpay_subscription_id = ?
+        `).get(subscriptionId);
+
+        if (!savedSubscription) {
+            throw new Error(
+                "Subscription mapping could not be recovered"
+            );
+        }
+
+        console.log(
+            "[SERVER] AutoPay mapping recovered:",
+            subscriptionId,
+            "Telegram user:",
+            savedSubscription.telegram_user_id
+        );
+    } catch (error) {
+        console.error(
+            "[SERVER] AutoPay mapping recovery failed:",
+            error.message
+        );
+
+        return res.status(500).send(
+            "Subscription mapping recovery failed"
+        );
+    }
+}
+
 
                 const statusByEvent = {
                     "subscription.authenticated": "authenticated",
