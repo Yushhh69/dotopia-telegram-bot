@@ -757,6 +757,12 @@ bot.action("autopay", async (ctx) => {
             subscription.status || "created",
             subscription.short_url || null
         );
+        console.log(
+    "[BOT] AutoPay subscription saved:",
+    subscription.id,
+    "Telegram user:",
+    telegramUserId
+);
 
         if (!subscription.short_url) {
             throw new Error(
