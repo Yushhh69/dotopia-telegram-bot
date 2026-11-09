@@ -1,0 +1,20 @@
+
+name: Keep Dotopia Render Awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  keep-awake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping Dotopia Render Server
+        run: |
+          echo "Pinging Dotopia Render..."
+          curl -fsS --max-time 30 \
+            https://dotopia-telegram-bot.onrender.com/
+          echo "Render server responded successfully."
