@@ -9,12 +9,12 @@ on:
 jobs:
   keep-awake:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
 
     steps:
       - name: Ping Dotopia Render Server
         run: |
           echo "Pinging Dotopia Render..."
-          curl -fsS --max-time 30 \
+          curl -fsS --connect-timeout 15 --max-time 90 \
             https://dotopia-telegram-bot.onrender.com/
           echo "Render server responded successfully."
