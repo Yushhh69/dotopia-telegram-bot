@@ -2588,6 +2588,47 @@ app.post(
     }
 );
 
+// ==========================================
+// TEMPORARY DATABASE EXPORT
+// Remove after successful migration
+// ==========================================
+
+app.get("/admin/export-database", async (req, res) => {
+    const fs = require("fs");
+    const path = require("path");
+    const os = require("os");
+
+    const backupPath = path.join(
+        os.tmpdir(),
+        `dotopia-backup-${Date.now()}-${crypto.randomBytes(8).toString("hex")}.db`
+    );
+
+    try {
+        await db.backup(backupPath);
+
+        res.download(
+            backupPath,
+            "dotopia.db",
+            (error) => {
+                fs.promises.unlink(backupPath).catch(() => {});
+
+                if (error) {
+                    console.error("Database download error:", error.message);
+                }
+            }
+        );
+
+    } catch (error) {
+        fs.promises.unlink(backupPath).catch(() => {});
+
+        console.error("Database backup failed:", error);
+
+        if (!res.headersSent) {
+            res.status(500).send("Database backup failed.");
+        }
+    }
+});
+
 // START SERVER
 // ==========================================
 
