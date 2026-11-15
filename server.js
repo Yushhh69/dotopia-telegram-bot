@@ -4,6 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 
 const db = require("./database");
+const { router: websiteAuthRouter, issueWebsiteInvitation } = require("./website-auth");
 
 const app = express();
 
@@ -44,6 +45,8 @@ app.use(
         }
     })
 );
+
+app.use("/api/website", websiteAuthRouter);
 
 // ==========================================
 // BASIC HEALTH ENDPOINT
@@ -232,6 +235,33 @@ async function sendNewMembershipAccess(
     console.log(
         "✅ Membership access sent"
     );
+}
+
+// ==========================================
+// SEND WEBSITE MEMBERSHIP INVITATION
+// ==========================================
+
+async function sendWebsiteMembershipInvitation(telegramUserId, membershipId) {
+    const code = issueWebsiteInvitation(membershipId);
+
+    await telegramRequest("sendMessage", {
+        chat_id: telegramUserId,
+        text:
+            "🌐 *Your Dotopia website access is ready!*
+
+" +
+            "Use this one-time invitation code on the Dotopia website:
+
+" +
+            "`" + code + "`
+
+" +
+            "This code is personal, can only be redeemed once, and expires with your membership.
+
+" +
+            "Open the website and choose *Redeem Access*.",
+        parse_mode: "Markdown"
+    });
 }
 
 // ==========================================
@@ -856,6 +886,11 @@ async function fulfillPayment(
                 payment.telegram_user_id,
                 inviteLink
             );
+
+            await sendWebsiteMembershipInvitation(
+                payment.telegram_user_id,
+                membership.id
+            );
         }
 
         // ==================================
@@ -895,6 +930,11 @@ async function fulfillPayment(
                     membership.membership_end
                 ),
                 inviteLink
+            );
+
+            await sendWebsiteMembershipInvitation(
+                payment.telegram_user_id,
+                membership.id
             );
         }
 
