@@ -247,18 +247,10 @@ async function sendWebsiteMembershipInvitation(telegramUserId, membershipId) {
     await telegramRequest("sendMessage", {
         chat_id: telegramUserId,
         text:
-            "🌐 *Your Dotopia website access is ready!*
-
-" +
-            "Use this one-time invitation code on the Dotopia website:
-
-" +
-            "`" + code + "`
-
-" +
-            "This code is personal, can only be redeemed once, and expires with your membership.
-
-" +
+            "🌐 *Your Dotopia website access is ready!*\\n\\n" +
+            "Use this one-time invitation code on the Dotopia website:\\n\\n" +
+            "`" + code + "`\\n\\n" +
+            "This code is personal, can only be redeemed once, and expires with your membership.\\n\\n" +
             "Open the website and choose *Redeem Access*.",
         parse_mode: "Markdown"
     });
