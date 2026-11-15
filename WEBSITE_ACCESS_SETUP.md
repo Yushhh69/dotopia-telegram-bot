@@ -57,16 +57,7 @@ export default {
       upstream.hostname = "dotopia-telegram-bot.onrender.com";
       upstream.port = "";
 
-      const headers = new Headers(request.headers);
-      headers.set("Host", upstream.hostname);
-
-      const upstreamRequest = new Request(upstream.toString(), {
-        method: request.method,
-        headers,
-        body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
-        redirect: "manual"
-      });
-
+      const upstreamRequest = new Request(upstream.toString(), request);
       return fetch(upstreamRequest);
     }
 
