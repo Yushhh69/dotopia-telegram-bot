@@ -4,7 +4,7 @@ const db = require("./database");
 
 const router = express.Router();
 const COOKIE_NAME = "dotopia_session";
-const SESSION_DAYS = 30;
+const SESSION_DAYS = 180;
 
 function sha256(value) {
     return crypto.createHash("sha256").update(value).digest("hex");
@@ -12,17 +12,6 @@ function sha256(value) {
 
 function nowIso() {
     return new Date().toISOString();
-}
-
-function cookieOptions(maxAge) {
-    return [
-        `${COOKIE_NAME}=${maxAge ? "" : ""}`,
-        "Path=/",
-        "HttpOnly",
-        "Secure",
-        "SameSite=None",
-        `Max-Age=${maxAge}`
-    ].join("; ");
 }
 
 function readCookie(req, name) {
@@ -84,6 +73,14 @@ function issueWebsiteInvitation(membershipId) {
             SET status = 'revoked'
             WHERE membership_id = ? AND status = 'issued'
         `).run(membershipId);
+
+        // Keep already-authenticated members signed in when a renewal
+        // extends the same membership record.
+        db.prepare(`
+            UPDATE website_sessions
+            SET expires_at = ?
+            WHERE membership_id = ? AND revoked_at IS NULL
+        `).run(expiresAt, membershipId);
 
         db.prepare(`
             INSERT INTO website_invitations
@@ -153,7 +150,9 @@ router.post("/redeem", (req, res) => {
             });
         }
 
-        const maxAge = Math.max(0, Math.floor((new Date(result.expiresAt).getTime() - Date.now()) / 1000));
+        // Keep the browser cookie available across an early renewal.
+        // The database membership expiry remains the authoritative cutoff.
+        const maxAge = SESSION_DAYS * 24 * 60 * 60;
         res.setHeader("Set-Cookie", [
             `${COOKIE_NAME}=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=${maxAge}`
         ]);
