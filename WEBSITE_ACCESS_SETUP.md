@@ -16,10 +16,9 @@ Set:
 
 - `WEBSITE_ORIGIN`: exact public website origin, including scheme, e.g. `https://members.example.com`.
 
-The website currently calls the known Render service URL:
-`https://dotopia-telegram-bot.onrender.com`.
+The browser is configured to call the API on the same origin using relative `/api/website/*` paths. Cloudflare Worker must proxy those paths to `https://dotopia-telegram-bot.onrender.com`.
 
-The browser sends credentialed requests. Cross-origin cookies can be blocked by browsers when the website and API are on unrelated registrable domains. For production, use a same-site API hostname (for example `api.example.com` proxied to Render through Cloudflare) or a Cloudflare Pages Function/Worker proxy so browser requests are same-origin. Do not assume that setting CORS alone solves third-party-cookie restrictions.
+The browser sends credentialed requests. Cross-origin cookies can be blocked by browsers when the website and API are on unrelated registrable domains. The Worker must proxy `/api/website/*` to Render and preserve request method, body, cookies, and response Set-Cookie headers. This keeps the browser session same-origin and avoids third-party-cookie restrictions. Do not expose Render secrets in the Worker.
 
 ## Important deployment notes
 
