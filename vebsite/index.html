@@ -1,96 +1,489 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Dotopia — exclusive 3-month private Telegram membership.">
-  <title>Dotopia — Exclusive Private Membership</title>
+  <meta name="theme-color" content="#0b0b0d">
+  <meta name="description" content="Dotopia — exclusive photos, videos and premium members-only content.">
+  <title>Dotopia — Your Private World</title>
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --gold: #c6a66b;
+      --gold-light: #e2c994;
+    }
+
+    .gold { color: var(--gold-light); }
+
+    .hero {
+      padding-top: 110px;
+      padding-bottom: 100px;
+    }
+
+    .hero h1 span {
+      color: var(--gold-light);
+    }
+
+    .eyebrow, .section-label {
+      color: var(--gold);
+    }
+
+    .button.primary {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #101010;
+    }
+
+    .button.primary:hover {
+      background: var(--gold-light);
+    }
+
+    .button.secondary {
+      border-color: #66563a;
+    }
+
+    .redeem-section {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 35px 24px 100px;
+    }
+
+    .redeem-card {
+      background: linear-gradient(145deg, #191817, #111114);
+      border: 1px solid #51452f;
+      border-radius: 22px;
+      padding: 38px;
+    }
+
+    .redeem-card h2 {
+      font-size: clamp(30px, 5vw, 44px);
+      margin: 12px 0;
+    }
+
+    .redeem-card p {
+      color: var(--muted);
+    }
+
+    .redeem-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .redeem-form input {
+      flex: 1;
+      min-width: 0;
+      background: #0b0b0d;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: white;
+      padding: 15px;
+      font: inherit;
+      outline: none;
+    }
+
+    .redeem-form input:focus {
+      border-color: var(--gold);
+    }
+
+    .redeem-message {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--gold-light);
+    }
+
+    .content-preview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 35px;
+    }
+
+    .preview-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 25px;
+    }
+
+    .preview-card .number {
+      font-family: "Space Grotesk";
+      color: var(--gold);
+      font-size: 28px;
+    }
+
+    .preview-card h3 {
+      font-size: 19px;
+    }
+
+    .preview-card p {
+      font-size: 13px;
+    }
+
+    .membership-card {
+      border-color: #51452f;
+    }
+
+    .price {
+      border-color: #51452f;
+    }
+
+    .faq details[open] summary {
+      color: var(--gold-light);
+    }
+
+    @media(max-width: 650px) {
+      .redeem-card { padding: 25px; }
+      .redeem-form { flex-direction: column; }
+      .redeem-form .button { width: 100%; }
+      .content-preview { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
+
 <body>
-  <header class="nav">
-    <a class="brand" href="index.html">DOTOPIA</a>
-    <nav>
-      <a href="#membership">Membership</a>
-      <a href="#how-it-works">How it works</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
 
-  <main>
-    <section class="hero">
-      <div class="eyebrow">PRIVATE TELEGRAM MEMBERSHIP</div>
-      <h1>Exclusive content.<br><span>One private space.</span></h1>
-      <p class="hero-copy">
-        Join the private Dotopia Telegram channel and get 3 months of access to exclusive member content.
-      </p>
-      <div class="hero-actions">
-        <a class="button primary" href="https://t.me/dotopiabot">Get Membership</a>
-        <a class="button secondary" href="#how-it-works">Learn More</a>
-      </div>
-      <p class="small-note">Secure payments are processed through Razorpay. Access is delivered through Telegram.</p>
-    </section>
+<header class="nav">
+  <a class="brand" href="index.html">DOTOPIA<span class="gold">.</span></a>
+  <nav>
+    <a href="#membership">Membership</a>
+    <a href="#redeem">Redeem Access</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
 
-    <section class="trust-row">
-      <div><strong>3 Months</strong><span>Membership access</span></div>
-      <div><strong>₹1,499</strong><span>One-time payment</span></div>
-      <div><strong>Telegram</strong><span>Private channel access</span></div>
-    </section>
+<main>
 
-    <section id="membership" class="section">
-      <div class="section-label">MEMBERSHIP</div>
-      <h2>Simple, straightforward access.</h2>
-      <div class="card membership-card">
-        <div>
-          <p class="card-kicker">DOTOPIA MEMBERSHIP</p>
-          <h3>3-Month Private Membership</h3>
-          <p>Access to the exclusive Dotopia private Telegram channel for three months.</p>
-          <ul>
-            <li>Private Telegram channel access</li>
-            <li>3 months of membership</li>
-            <li>Secure Razorpay payment</li>
-            <li>Renewal available after or before expiry</li>
-          </ul>
-        </div>
-        <div class="price">
-          <span>₹</span>1,499
-          <small>for 3 months</small>
-          <a class="button primary full" href="https://t.me/dotopiabot">Join Dotopia</a>
-        </div>
-      </div>
-    </section>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="eyebrow">AN EXCLUSIVE MEMBERSHIP EXPERIENCE</div>
 
-    <section id="how-it-works" class="section muted">
-      <div class="section-label">HOW IT WORKS</div>
-      <h2>From payment to private access.</h2>
-      <div class="steps">
-        <div class="step"><b>01</b><h3>Open the bot</h3><p>Start the Dotopia Telegram bot and choose the membership option.</p></div>
-        <div class="step"><b>02</b><h3>Make payment</h3><p>Complete the one-time membership payment through Razorpay.</p></div>
-        <div class="step"><b>03</b><h3>Get access</h3><p>After payment verification, you receive access instructions for the private channel.</p></div>
-        <div class="step"><b>04</b><h3>Enjoy 3 months</h3><p>Your membership remains active for three months from activation.</p></div>
-      </div>
-    </section>
+    <h1>
+      Your world.<br>
+      <span>Your private access.</span>
+    </h1>
 
-    <section class="section faq">
-      <div class="section-label">FAQ</div>
-      <h2>Good to know.</h2>
-      <details><summary>Is this a recurring subscription?</summary><p>No. The membership is a one-time payment for 3 months. Renewal is manual.</p></details>
-      <details><summary>How do I receive access?</summary><p>After successful payment verification, access instructions are sent through Telegram.</p></details>
-      <details><summary>What happens when my membership expires?</summary><p>Private-channel access is removed after the membership period ends. You can purchase another 3-month membership to regain access.</p></details>
-      <details><summary>Where can I get support?</summary><p>Contact the Dotopia team through the Telegram bot.</p></details>
-    </section>
-  </main>
+    <p class="hero-copy">
+      Discover a private collection of exclusive photographs,
+      videos and content. A space created for members who want
+      something beyond the ordinary.
+    </p>
 
-  <footer>
-    <div class="footer-brand">DOTOPIA</div>
-    <div class="footer-links">
-      <a href="terms.html">Terms & Conditions</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="refunds.html">Cancellation & Refunds</a>
-      <a href="shipping.html">Shipping Policy</a>
-      <a href="contact.html">Contact Us</a>
+    <div class="hero-actions">
+      <a class="button primary" href="https://t.me/dotopiabot">
+        Get Membership
+      </a>
+
+      <a class="button secondary" href="#redeem">
+        I Have an Invitation
+      </a>
     </div>
-    <p>© 2026 Dotopia. All rights reserved.</p>
-  </footer>
+
+    <p class="small-note">
+      Exclusive content. Private membership. Secure payment processing.
+    </p>
+  </section>
+
+  <!-- TRUST ROW -->
+  <section class="trust-row">
+    <div>
+      <strong>Exclusive</strong>
+      <span>Members-only content</span>
+    </div>
+
+    <div>
+      <strong>Private</strong>
+      <span>Personal member access</span>
+    </div>
+
+    <div>
+      <strong>3 Months</strong>
+      <span>Membership duration</span>
+    </div>
+  </section>
+
+  <!-- REDEEM INVITATION -->
+  <section id="redeem" class="redeem-section">
+    <div class="redeem-card">
+
+      <div class="section-label">MEMBER ACCESS</div>
+
+      <h2>
+        Already have an <span class="gold">invitation?</span>
+      </h2>
+
+      <p>
+        Enter your unique Dotopia invitation link to begin
+        activating your private membership.
+      </p>
+
+      <form id="redeemForm" class="redeem-form">
+        <input
+          type="url"
+          id="invitationLink"
+          placeholder="Paste your invitation link here"
+          autocomplete="url"
+          required
+        >
+
+        <button class="button primary" type="submit">
+          Redeem Invitation
+        </button>
+      </form>
+
+      <div
+        id="redeemMessage"
+        class="redeem-message"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+      <p class="small-note">
+        Invitation links are personal and intended for one-time use.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- CONTENT INTRODUCTION -->
+  <section class="section">
+    <div class="section-label">THE DOTOPIA EXPERIENCE</div>
+
+    <h2>
+      More than content.<br>
+      An exclusive experience.
+    </h2>
+
+    <div class="content-preview">
+
+      <div class="preview-card">
+        <div class="number">01</div>
+        <h3>Exclusive Photos</h3>
+        <p>
+          Explore private photographic collections
+          available exclusively to members.
+        </p>
+      </div>
+
+      <div class="preview-card">
+        <div class="number">02</div>
+        <h3>Premium Videos</h3>
+        <p>
+          Watch exclusive videos and private
+          behind-the-scenes content.
+        </p>
+      </div>
+
+      <div class="preview-card">
+        <div class="number">03</div>
+        <h3>Private Updates</h3>
+        <p>
+          Discover exclusive posts and updates
+          published for the Dotopia community.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MEMBERSHIP -->
+  <section id="membership" class="section muted">
+    <div class="section-label">MEMBERSHIP</div>
+
+    <h2>Simple. Exclusive. Yours.</h2>
+
+    <div class="card membership-card">
+
+      <div>
+        <p class="card-kicker">DOTOPIA PREMIUM</p>
+
+        <h3>3-Month Membership</h3>
+
+        <p>
+          Unlock access to the exclusive Dotopia
+          content library for three months.
+        </p>
+
+        <ul>
+          <li>Exclusive photographs</li>
+          <li>Premium video collections</li>
+          <li>Private members-only posts</li>
+          <li>Personal website access</li>
+          <li>Automatic access expiry</li>
+          <li>Renewal available</li>
+        </ul>
+      </div>
+
+      <div class="price">
+        <span>₹</span>1,499
+
+        <small>For 3 months</small>
+
+        <a
+          class="button primary full"
+          href="https://t.me/dotopiabot"
+        >
+          Get Membership
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="section">
+    <div class="section-label">HOW IT WORKS</div>
+
+    <h2>Your access, made simple.</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <b>01</b>
+        <h3>Get Membership</h3>
+        <p>
+          Open the Dotopia Telegram bot and
+          choose your membership.
+        </p>
+      </div>
+
+      <div class="step">
+        <b>02</b>
+        <h3>Complete Payment</h3>
+        <p>
+          Complete your payment securely through Razorpay.
+        </p>
+      </div>
+
+      <div class="step">
+        <b>03</b>
+        <h3>Receive Invitation</h3>
+        <p>
+          Receive your personal website invitation
+          directly through the Telegram bot.
+        </p>
+      </div>
+
+      <div class="step">
+        <b>04</b>
+        <h3>Unlock Content</h3>
+        <p>
+          Activate your membership and access
+          your exclusive content library.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section faq">
+    <div class="section-label">FREQUENTLY ASKED QUESTIONS</div>
+
+    <h2>Everything you need to know.</h2>
+
+    <details>
+      <summary>How do I purchase a membership?</summary>
+      <p>
+        Open the official Dotopia Telegram bot,
+        select your membership and complete payment
+        through Razorpay.
+      </p>
+    </details>
+
+    <details>
+      <summary>How will I receive my invitation?</summary>
+      <p>
+        After successful payment verification,
+        the bot will send your personal website
+        invitation link.
+      </p>
+    </details>
+
+    <details>
+      <summary>Can I share my invitation link?</summary>
+      <p>
+        Invitations are designed for individual,
+        one-time redemption and will be associated
+        with the purchasing account.
+      </p>
+    </details>
+
+    <details>
+      <summary>How long does my membership last?</summary>
+      <p>
+        The standard membership lasts three months.
+        Access is subject to your membership status.
+      </p>
+    </details>
+
+    <details>
+      <summary>What happens when my membership expires?</summary>
+      <p>
+        Access to premium content will be disabled
+        after your membership expires. You can renew
+        your membership to regain access.
+      </p>
+    </details>
+
+    <details>
+      <summary>How can I contact support?</summary>
+      <p>
+        Visit our contact page or contact the
+        Dotopia team through the official Telegram bot.
+      </p>
+    </details>
+
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    DOTOPIA<span class="gold">.</span>
+  </div>
+
+  <div class="footer-links">
+    <a href="terms.html">Terms & Conditions</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="refunds.html">Cancellation & Refunds</a>
+    <a href="shipping.html">Shipping Policy</a>
+    <a href="contact.html">Contact Us</a>
+  </div>
+
+  <p>© 2026 Dotopia. All rights reserved.</p>
+</footer>
+
+<script>
+  const redeemForm = document.getElementById("redeemForm");
+  const redeemMessage = document.getElementById("redeemMessage");
+  const invitationInput = document.getElementById("invitationLink");
+
+  redeemForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const value = invitationInput.value.trim();
+
+    try {
+      const invitation = new URL(value);
+
+      if (invitation.protocol !== "https:") {
+        throw new Error("Invalid invitation");
+      }
+
+      redeemMessage.textContent =
+        "Invitation redemption is being configured. Please use the invitation link sent by the Dotopia bot once activation is available.";
+
+    } catch {
+      redeemMessage.textContent =
+        "Please enter a valid HTTPS invitation link.";
+    }
+  });
+</script>
+
 </body>
 </html>
