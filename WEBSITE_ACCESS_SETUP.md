@@ -34,3 +34,55 @@ The browser sends credentialed requests. Cross-origin cookies can be blocked by 
 - `POST /api/website/redeem` — body: `{"code":"ONE_TIME_CODE"}`; redeems code and sets session cookie.
 - `GET /api/website/me` — checks session and current membership.
 - `POST /api/website/logout` — revokes current session.
+
+
+## Cloudflare Worker proxy
+
+The supplied public site origin is:
+
+`https://dotopia-telegram-bot.aayushmanwal-12.workers.dev`
+
+The browser now calls relative `/api/website/*` paths. The Worker must proxy only those API paths to the Render origin while leaving the existing website/static-asset behavior unchanged.
+
+If the existing Worker uses a Workers Static Assets binding named `ASSETS`, the API branch can be integrated into its current fetch handler like this (preserve the existing non-API logic):
+
+```js
+export default {
+  async fetch(request, env, ctx) {
+    const incoming = new URL(request.url);
+
+    if (incoming.pathname.startsWith("/api/website/")) {
+      const upstream = new URL(request.url);
+      upstream.protocol = "https:";
+      upstream.hostname = "dotopia-telegram-bot.onrender.com";
+      upstream.port = "";
+
+      const headers = new Headers(request.headers);
+      headers.set("Host", upstream.hostname);
+
+      const upstreamRequest = new Request(upstream.toString(), {
+        method: request.method,
+        headers,
+        body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
+        redirect: "manual"
+      });
+
+      return fetch(upstreamRequest);
+    }
+
+    return env.ASSETS.fetch(request);
+  }
+};
+```
+
+Do not replace the current Worker script with this example until its current static-site serving setup is confirmed. If it does not use an `ASSETS` binding, integrate the API proxy branch into the existing handler instead.
+
+Set Render variable:
+
+`WEBSITE_ORIGIN=https://dotopia-telegram-bot.aayushmanwal-12.workers.dev`
+
+After deploying the Worker and Render changes, verify:
+- `GET /api/website/me` is proxied to Render (it should return 401 when signed out, not a Worker 404).
+- A successful redemption response includes a `Set-Cookie` header.
+- The browser stores the HttpOnly cookie for the workers.dev origin.
+- The same browser can open `/members.html` and retain access.
