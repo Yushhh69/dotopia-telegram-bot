@@ -154,7 +154,7 @@ router.post("/redeem", (req, res) => {
         // The database membership expiry remains the authoritative cutoff.
         const maxAge = SESSION_DAYS * 24 * 60 * 60;
         res.setHeader("Set-Cookie", [
-            `${COOKIE_NAME}=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=${maxAge}`
+            `${COOKIE_NAME}=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`
         ]);
         return res.json({ success: true, redirect: "/members.html" });
     } catch (error) {
@@ -184,7 +184,7 @@ router.get("/me", (req, res) => {
                 db.prepare("UPDATE website_sessions SET revoked_at = ? WHERE id = ?")
                     .run(nowIso(), session.session_id);
             }
-            res.setHeader("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`);
+            res.setHeader("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
             return res.status(401).json({ authenticated: false });
         }
 
@@ -206,7 +206,7 @@ router.post("/logout", (req, res) => {
             WHERE session_hash = ? AND revoked_at IS NULL
         `).run(nowIso(), sha256(token));
     }
-    res.setHeader("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`);
+    res.setHeader("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
     return res.json({ success: true });
 });
 
