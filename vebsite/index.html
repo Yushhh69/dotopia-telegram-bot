@@ -216,16 +216,19 @@
       </h2>
 
       <p>
-        Enter your unique Dotopia invitation link to begin
-        activating your private membership.
+        Enter the one-time access code sent to you by the
+        official Dotopia Telegram bot.
       </p>
 
       <form id="redeemForm" class="redeem-form">
         <input
-          type="url"
+          type="text"
           id="invitationLink"
-          placeholder="Paste your invitation link here"
-          autocomplete="url"
+          placeholder="Enter your one-time access code"
+          autocomplete="one-time-code"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength="64"
           required
         >
 
@@ -242,7 +245,7 @@
       ></div>
 
       <p class="small-note">
-        Invitation links are personal and intended for one-time use.
+        Each invitation code is personal and can only be redeemed once.
       </p>
 
     </div>
@@ -459,28 +462,35 @@
 </footer>
 
 <script>
+  const API_BASE = window.DOTOPIA_API_BASE || "https://dotopia-telegram-bot.onrender.com";
   const redeemForm = document.getElementById("redeemForm");
   const redeemMessage = document.getElementById("redeemMessage");
   const invitationInput = document.getElementById("invitationLink");
+  const redeemButton = redeemForm.querySelector("button");
 
-  redeemForm.addEventListener("submit", function(event) {
+  redeemForm.addEventListener("submit", async function(event) {
     event.preventDefault();
-
-    const value = invitationInput.value.trim();
+    redeemMessage.textContent = "Verifying your invitation…";
+    redeemButton.disabled = true;
 
     try {
-      const invitation = new URL(value);
+      const response = await fetch(API_BASE + "/api/website/redeem", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: invitationInput.value.trim().toUpperCase() })
+      });
 
-      if (invitation.protocol !== "https:") {
-        throw new Error("Invalid invitation");
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "We couldn't verify this invitation.");
       }
 
-      redeemMessage.textContent =
-        "Invitation redemption is being configured. Please use the invitation link sent by the Dotopia bot once activation is available.";
-
-    } catch {
-      redeemMessage.textContent =
-        "Please enter a valid HTTPS invitation link.";
+      redeemMessage.textContent = "Access activated. Taking you to your private library…";
+      window.location.assign("/members.html");
+    } catch (error) {
+      redeemMessage.textContent = error.message || "Unable to connect. Please try again.";
+      redeemButton.disabled = false;
     }
   });
 </script>
