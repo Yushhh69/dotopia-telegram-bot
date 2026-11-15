@@ -306,6 +306,40 @@ db.exec(`
     ON payments(fulfillment_status);
 `);
 
+
+/* ==========================================
+   WEBSITE MEMBERSHIP ACCESS
+========================================== */
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS website_invitations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        membership_id INTEGER NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL DEFAULT 'issued',
+        expires_at TEXT NOT NULL,
+        redeemed_at TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (membership_id) REFERENCES memberships(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_website_invitations_membership
+    ON website_invitations(membership_id, status);
+
+    CREATE TABLE IF NOT EXISTS website_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        membership_id INTEGER NOT NULL,
+        session_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        revoked_at TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (membership_id) REFERENCES memberships(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_website_sessions_hash
+    ON website_sessions(session_hash, revoked_at);
+`);
+
 console.log(
     "✅ Dotopia database initialized"
 );
