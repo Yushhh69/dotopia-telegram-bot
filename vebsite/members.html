@@ -38,7 +38,7 @@
     </section>
   </main>
   <script>
-    const API_BASE = window.DOTOPIA_API_BASE || "https://dotopia-telegram-bot.onrender.com";
+    const API_BASE = window.DOTOPIA_API_BASE || "";
     async function checkMembership() {
       const response = await fetch(API_BASE + "/api/website/me", { credentials: "include" });
       if (!response.ok) {
