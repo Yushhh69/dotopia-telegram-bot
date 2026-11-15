@@ -462,7 +462,7 @@
 </footer>
 
 <script>
-  const API_BASE = window.DOTOPIA_API_BASE || "";
+  const API_BASE = "https://dotopia-backend.aayushmanwal-12.workers.dev";
   const redeemForm = document.getElementById("redeemForm");
   const redeemMessage = document.getElementById("redeemMessage");
   const invitationInput = document.getElementById("invitationLink");
@@ -474,7 +474,7 @@
     redeemButton.disabled = true;
 
     try {
-      const response = await fetch(API_BASE + "/api/website/redeem", {
+      const response = await fetch(API_BASE + "/website/redeem", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
