@@ -38,9 +38,9 @@
     </section>
   </main>
   <script>
-    const API_BASE = window.DOTOPIA_API_BASE || "";
+    const API_BASE = "https://dotopia-backend.aayushmanwal-12.workers.dev";
     async function checkMembership() {
-      const response = await fetch(API_BASE + "/api/website/me", { credentials: "include" });
+      const response = await fetch(API_BASE + "/website/me", { credentials: "include" });
       if (!response.ok) {
         window.location.replace("/#redeem");
         return;
@@ -48,10 +48,11 @@
       const data = await response.json();
       document.getElementById("welcomeText").textContent = "Your membership is active. Enjoy your private space.";
       document.getElementById("membershipStatus").textContent =
-        "Membership valid until " + new Date(data.membershipEndsAt).toLocaleDateString();
+  "Membership valid until " +
+  new Date(data.membership.membership_end).toLocaleDateString("en-IN");
     }
     document.getElementById("logoutButton").addEventListener("click", async () => {
-      await fetch(API_BASE + "/api/website/logout", { method: "POST", credentials: "include" });
+      await fetch(API_BASE + "/website/logout", { method: "POST", credentials: "include" });
       window.location.replace("/");
     });
     checkMembership().catch(() => {
